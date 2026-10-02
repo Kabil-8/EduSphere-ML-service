@@ -687,6 +687,15 @@ def predict_placement_readiness(data: Dict[str, Any]):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/ml/interview/readiness", tags=["Interview"])
+def predict_interview_readiness(data: Dict[str, Any]):
+    """Calculates interview readiness score from actual mock interview attempts and technical signals."""
+    try:
+        readiness = InterviewEngine.calculate_interview_readiness(data)
+        return {"success": True, "data": readiness}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ── RAG Knowledge Retrieval ─────────────────────────────────────────────────
 
 class RAGChatRequest(BaseModel):

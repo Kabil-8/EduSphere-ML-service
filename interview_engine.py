@@ -237,3 +237,66 @@ class InterviewEngine:
             "feedback": feedback,
             "modelAnswer": model_ans
         }
+
+    @staticmethod
+    def calculate_interview_readiness(data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Calculates interview readiness score from actual mock interview attempts,
+        coding proficiency, and ATS technical resume metrics.
+        """
+        attempts = data.get("attempts", []) or []
+        ats_score = float(data.get("ats_score", 0.0) or 0.0)
+        coding_score = float(data.get("coding_score", 0.0) or 0.0)
+        cgpa = float(data.get("cgpa", 0.0) or 0.0)
+        target_role = data.get("target_role", "Software Development Engineer")
+
+        # 1. Historical attempts evaluation
+        if len(attempts) > 0:
+            scores = [float(a.get("overallScore", 0) or 0) for a in attempts]
+            avg_attempt_score = sum(scores) / len(scores)
+            recent_score = scores[-1]
+            mock_component = (recent_score * 0.6) + (avg_attempt_score * 0.4)
+            readiness_score = (mock_component * 0.55) + (coding_score * 0.25) + (ats_score * 0.20)
+        else:
+            mock_component = 0.0
+            readiness_score = (coding_score * 0.50) + (ats_score * 0.35) + ((cgpa / 10.0) * 15.0)
+
+        readiness_score = round(min(98.0, max(10.0, readiness_score)), 1)
+
+        if readiness_score >= 85:
+            tier = "Tier 1 FAANG / Unicorn Interview Ready"
+            grade = "A+"
+        elif readiness_score >= 70:
+            tier = "Enterprise SaaS & High-Growth Ready"
+            grade = "A"
+        elif readiness_score >= 50:
+            tier = "General Technical Screening Ready"
+            grade = "B"
+        else:
+            tier = "Needs Foundational Mock Practice"
+            grade = "C"
+
+        recommendations = []
+        if len(attempts) == 0:
+            recommendations.append("Complete at least 2 full AI Mock Interviews to establish a calibrated behavioral baseline.")
+        if coding_score < 70:
+            recommendations.append("Strengthen live coding articulation by solving Medium DSA problems under time pressure.")
+        if ats_score < 75:
+            recommendations.append("Align your resume technical keywords with target role specifications.")
+        if not recommendations:
+            recommendations.append("Maintain performance with high-difficulty System Design and STAR behavioral drills.")
+
+        return {
+            "interview_readiness_score": readiness_score,
+            "performance_tier": tier,
+            "grade": grade,
+            "target_role": target_role,
+            "attempts_analyzed": len(attempts),
+            "breakdown": {
+                "mock_interview_performance": round(mock_component, 1) if len(attempts) > 0 else "Pending First Mock",
+                "coding_problem_proficiency": round(coding_score, 1),
+                "ats_resume_alignment": round(ats_score, 1)
+            },
+            "recommendations": recommendations
+        }
+
